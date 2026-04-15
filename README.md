@@ -2,49 +2,69 @@
 
 ## Project Overview
 
-This repository provides a modular, research-oriented baseline for knowledge graph link prediction using natural-language representations of triples and sentence embeddings. The current implementation uses `nomic-ai/nomic-embed-text-v1.5` through `sentence-transformers`, converts triples into readable text, and ranks candidate entities with cosine similarity.
+This project is a simple baseline for knowledge graph link prediction using text embeddings instead of traditional KGE models. The main idea is to convert triples into natural language sentences and use a pretrained embedding model to rank possible candidates.
 
-The code is intentionally organized like a small research project:
+I used the `nomic-ai/nomic-embed-text-v1.5` model (via `sentence-transformers`) and treated link prediction as a similarity problem. Given a partially missing triple, the model scores all possible candidates and ranks them based on cosine similarity.
 
-- `src/data_loader.py` handles dataset parsing and vocabulary construction.
-- `src/text_encoder.py` wraps the embedding model and caches repeated texts.
-- `src/link_prediction.py` performs head and tail ranking.
-- `src/evaluation.py` computes MR, MRR, and Hits@K.
-- `src/utils.py` contains shared utilities for seeding, path handling, and triple textualization.
+The project is structured in a modular way so it’s easier to experiment and extend:
+
+* `src/data_loader.py` → loads datasets and builds entity/relation vocab
+* `src/text_encoder.py` → handles embedding + simple caching (to avoid recomputing)
+* `src/link_prediction.py` → does head/tail prediction and ranking
+* `src/evaluation.py` → computes MR, MRR, Hits@K (filtered setting)
+* `src/utils.py` → helper functions (text conversion, seeding, etc.)
+
+---
 
 ## Setup Instructions
 
-1. Create and activate a Python virtual environment.
+1. Create a virtual environment (recommended):
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
 2. Install dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-3. Place your datasets under the `data/` directory using the expected structure shown below.
+---
 
-## How to Run the Code
+## How to Run
 
-Run a small validation subset on FB15K:
+Example (FB15K with small subset):
 
 ```bash
 python3 main.py --dataset FB15K --subset-size 100
 ```
 
-Useful options:
+You can also try:
 
 ```bash
 python3 main.py --dataset WN18RR --subset-size 50
 python3 main.py --dataset YAGO3-10 --subset-size 25 --batch-size 64
 ```
 
-Notes:
+---
 
-- The loader expects tab-separated triples in `train.txt`, `valid.txt`, and `test.txt`.
-- Evaluation currently uses a small validation subset for debugging because exact ranking over all entities is computationally expensive.
-- FB15K label metadata in `entity2wikidata.json` is used automatically when available so text embeddings see readable entity names instead of opaque IDs.
+## Notes
 
-## Expected Folder Structure for Datasets
+* The dataset should be in tab-separated format (`head relation tail`)
+* I’m using only a small subset for evaluation because ranking against all entities (~15k) is quite slow
+* FB15K works better if `entity2wikidata.json` is available since IDs get converted into readable text
+* This is a **baseline**, so performance is not very high (expected)
+
+---
+
+## Dataset Setup
+
+Download datasets from:
+https://github.com/villmow/datasets_knowledge_embedding
+
+Place them like this:
 
 ```text
 project_root/
@@ -52,18 +72,9 @@ project_root/
 │   ├── FB15K/
 │   ├── WN18RR/
 │   └── YAGO3-10/
-├── src/
-│   ├── data_loader.py
-│   ├── text_encoder.py
-│   ├── link_prediction.py
-│   ├── evaluation.py
-│   └── utils.py
-├── main.py
-├── requirements.txt
-└── README.md
 ```
 
-Expected dataset layout:
+Expected structure:
 
 ```text
 data/
@@ -71,7 +82,7 @@ data/
 │   ├── train.txt
 │   ├── valid.txt
 │   ├── test.txt
-│   └── entity2wikidata.json   # optional but useful for readable FB15K entity text
+│   └── entity2wikidata.json   # optional but helpful
 ├── WN18RR/
 │   ├── train.txt
 │   ├── valid.txt
@@ -82,8 +93,20 @@ data/
     └── test.txt
 ```
 
-Each line should contain one triple in the format:
+Each line in the files should look like:
 
 ```text
 head<TAB>relation<TAB>tail
 ```
+
+---
+
+## Final Thoughts
+
+This approach works by leveraging semantic similarity, but it doesn’t capture graph structure like traditional methods (e.g., TransE or KG-BERT). So the results are limited, but it’s a good starting point for experimenting with text-based approaches.
+
+If I had more time, I would:
+
+* precompute entity embeddings for speed
+* try better sentence templates
+* maybe combine this with graph-based methods
