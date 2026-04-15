@@ -110,3 +110,14 @@ If I had more time, I would:
 * precompute entity embeddings for speed
 * try better sentence templates
 * maybe combine this with graph-based methods
+
+## Results (Sample)
+
+MRR: ~0.0068  
+Hits@10: ~0.025  
+
+This does not use a grah structure
+
+## Runtime
+
+~80 seconds per triple (brute-force ranking over ~15k entities)
